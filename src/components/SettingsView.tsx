@@ -6,9 +6,22 @@ interface Props {
   onChange: (s: Settings) => void
   goals: Goal[]
   history: IncomeEntry[]
+  onImport: (data: unknown) => void
 }
 
-export function SettingsView({ settings, onChange, goals, history }: Props) {
+export function SettingsView({ settings, onChange, goals, history, onImport }: Props) {
+  const importFile = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        onImport(JSON.parse(String(reader.result)))
+      } catch {
+        /* el mensaje de error lo pone la app */
+      }
+    }
+    reader.readAsText(file)
+  }
+
   const set = <K extends keyof Settings>(key: K, value: Settings[K]) =>
     onChange({ ...settings, [key]: value })
 
@@ -144,12 +157,29 @@ export function SettingsView({ settings, onChange, goals, history }: Props) {
         <li>Consulta BCV, paralelo, USDT P2P y el ritmo de devaluación del BCV antes de cada reparto.</li>
       </ul>
 
-      <button className="ghost" style={{ marginTop: 18 }} onClick={exportBackup}>
-        Descargar respaldo
-      </button>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button className="ghost" onClick={exportBackup}>
+          Descargar respaldo
+        </button>
+        <label className="ghost" style={{ cursor: 'pointer' }}>
+          Importar respaldo
+          <input
+            type="file"
+            accept="application/json,.json"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) importFile(file)
+              e.target.value = ''
+            }}
+          />
+        </label>
+      </div>
       <p className="credit">
-        Los datos viven en este teléfono, no en un servidor. Tasas: dolarapi.com (BCV y paralelo) y Binance
-        P2P. Ninguna app decide por ti: el reparto es una recomendación calculada con tus números.
+        Los datos viven en este dispositivo, no en un servidor: lo que registres en la PC no aparece en
+        el teléfono y viceversa. Para pasarlos, descarga el respaldo aquí e impórtalo en el otro. Tasas:
+        dolarapi.com (BCV y paralelo) y criptoya.com (USDT P2P). Ninguna app decide por ti: el reparto es
+        una recomendación calculada con tus números.
       </p>
     </div>
   )

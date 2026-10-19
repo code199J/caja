@@ -42,12 +42,26 @@ repartir. Sin conexión usa las últimas guardadas y te avisa.
 npm install     # solo la primera vez
 npm run dev     # desarrollo en http://localhost:5188
 npm run build   # genera dist/
-./servir.sh     # sirve dist/ en la red local para abrirlo desde el teléfono
+./publicar.sh   # compila y publica en GitHub Pages
 ```
 
-`servir.sh` imprime la dirección para abrir desde el celular (misma red WiFi),
-por ejemplo `http://192.168.0.151:8080`. Mientras la ThinkPad esté encendida,
-el teléfono puede usar la app desde el navegador.
+### Dónde está
+
+- **En línea (la de verdad)**: <https://code199j.github.io/caja/> — ábrela en el
+  teléfono y dale a *Agregar a pantalla de inicio*: queda instalada como app,
+  con las tasas consultadas directo desde el teléfono.
+- **En la PC**: icono «Caja» en el dock/panel de Mint (ventana propia de Chrome).
+- **Repositorio**: <https://github.com/code199J/caja> (main = código,
+  gh-pages = versión compilada que sirve Pages).
+
+Cada dispositivo guarda sus datos en el navegador. Para pasarlos de la PC al
+teléfono (o al revés): Ajustes → *Descargar respaldo*, y en el otro dispositivo
+Ajustes → *Importar respaldo*.
+
+### Notas para el futuro
+
+- Para actualizar la app tras cambiar código: `./publicar.sh` y espera un minuto.
+- `servir.sh` sigue sirviendo por red local si prefieres no usar GitHub.
 
 ### Instalarla como app de verdad (PWA)
 

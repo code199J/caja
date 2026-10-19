@@ -5,6 +5,7 @@ import { buildPlan } from './engine/allocate'
 import { fetchRates } from './engine/rates'
 import {
   coveredThisMonth,
+  DEFAULT_SETTINGS,
   loadGoals,
   loadHistory,
   loadRates,
@@ -139,6 +140,23 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const handleImport = (data: unknown) => {
+    if (!data || typeof data !== 'object') {
+      setToast('Ese archivo no es un respaldo de Caja.')
+      return
+    }
+    const d = data as {
+      settings?: Partial<Settings>
+      goals?: Goal[]
+      history?: IncomeEntry[]
+    }
+    if (d.settings) setSettings({ ...DEFAULT_SETTINGS, ...d.settings })
+    if (Array.isArray(d.goals)) setGoals(d.goals)
+    if (Array.isArray(d.history)) setHistory(d.history)
+    const hadData = Boolean(d.settings || d.goals?.length || d.history?.length)
+    setToast(hadData ? 'Respaldo importado: datos reemplazados.' : 'Ese respaldo está vacío.')
+  }
+
   const handleDelete = (entry: IncomeEntry) => {
     setHistory((h) => h.filter((e) => e.id !== entry.id))
     if (entry.applied) {
@@ -235,7 +253,13 @@ export default function App() {
         <HistoryView history={history} rates={rates} onDelete={handleDelete} />
       )}
       {tab === 'ajustes' && (
-        <SettingsView settings={settings} onChange={setSettings} goals={goals} history={history} />
+        <SettingsView
+          settings={settings}
+          onChange={setSettings}
+          goals={goals}
+          history={history}
+          onImport={handleImport}
+        />
       )}
 
       <Nav tab={tab} onChange={setTab} />
