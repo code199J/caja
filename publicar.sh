@@ -26,7 +26,7 @@ touch "$TMP/.nojekyll"
 cd "$TMP"
 git init -q -b gh-pages
 git add -A
-git commit -q -m "dist: $(date +%F %H:%M)"
+git commit -q -m "dist: $(date '+%F %H:%M')"
 git -c "http.extraheader=$AUTH" push -q -f "$URL" gh-pages
 cd - >/dev/null
 rm -rf "$TMP"
