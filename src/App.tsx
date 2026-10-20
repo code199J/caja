@@ -15,7 +15,7 @@ import {
   saveHistory,
   saveSettings,
 } from './lib/store'
-import { usd } from './lib/format'
+import { parseAmount, sanitizeAmountInput, usd } from './lib/format'
 import { RateRail } from './components/RateRail'
 import { AmountPanel, type Source } from './components/AmountPanel'
 import { PlanView } from './components/PlanView'
@@ -77,11 +77,7 @@ export default function App() {
     return () => clearTimeout(t)
   }, [toast])
 
-  const amount = useMemo(() => {
-    const clean = amountRaw.replace(/\./g, '').replace(',', '.')
-    const n = Number(clean)
-    return Number.isFinite(n) ? n : 0
-  }, [amountRaw])
+  const amount = useMemo(() => parseAmount(sanitizeAmountInput(amountRaw)), [amountRaw])
 
   const covered = useMemo(() => coveredThisMonth(history), [history])
 

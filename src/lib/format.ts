@@ -32,6 +32,23 @@ export function digits(n: number, maxDecimals = 2) {
   }).format(n)
 }
 
+/** Sanea lo escrito: solo dígitos y una coma decimal (los puntos de miles se botan) */
+export function sanitizeAmountInput(raw: string): string {
+  let s = raw.replace(/[^\d,]/g, '')
+  const i = s.indexOf(',')
+  if (i > -1) {
+    s = s.slice(0, i + 1) + s.slice(i + 1).replace(/,/g, '').slice(0, 2)
+  }
+  return s.slice(0, 16)
+}
+
+/** Agrupa con puntos de miles: "10000,5" -> "10.000,5" */
+export function groupVeAmount(sanitized: string): string {
+  const [intPart, decPart] = sanitized.split(',')
+  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  return decPart !== undefined ? `${grouped},${decPart}` : grouped
+}
+
 /** Convierte "1.250,50" o "1250.50" a número */
 export function parseAmount(raw: string): number {
   const clean = raw.replace(/[^\d.,]/g, '')

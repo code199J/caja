@@ -1,5 +1,11 @@
 import type { Currency, Rates } from '../types'
-import { digits, parseAmount, rate as fmtRate } from '../lib/format'
+import {
+  digits,
+  groupVeAmount,
+  parseAmount,
+  rate as fmtRate,
+  sanitizeAmountInput,
+} from '../lib/format'
 import { IconArrow } from './icons'
 
 export type Source = 'efectivo_usd' | 'binance' | 'banesco'
@@ -30,13 +36,16 @@ export function AmountPanel({
   busy,
   onSubmit,
 }: Props) {
-  const amount = parseAmount(amountRaw)
+  const amount = parseAmount(sanitizeAmountInput(amountRaw))
   const effectiveRate = currency === 'USD' ? rates.usdtSell || rates.paralelo : rates.paralelo
   const usdValue = currency === 'USD' ? amount : amount / (rates.paralelo || 1)
 
   const handleType = (raw: string) => {
-    const n = parseAmount(raw)
-    setAmountRaw(raw === '' ? '' : digits(n, 2))
+    if (raw === '') {
+      setAmountRaw('')
+      return
+    }
+    setAmountRaw(groupVeAmount(sanitizeAmountInput(raw)))
   }
 
   return (

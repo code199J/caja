@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { AccountId, Goal } from '../types'
-import { digits, daysUntil, parseAmount, todayISO, usd } from '../lib/format'
+import { digits, daysUntil, parseAmount, sanitizeAmountInput, todayISO, usd } from '../lib/format'
 import { newId } from '../lib/store'
 
 interface Props {
@@ -110,7 +110,7 @@ export function GoalsView({ goals, onChange }: Props) {
                 inputMode="decimal"
                 value={draft.targetUSD ? digits(draft.targetUSD) : ''}
                 placeholder="300"
-                onChange={(e) => setDraft({ ...draft, targetUSD: parseAmount(e.target.value) })}
+                onChange={(e) => setDraft({ ...draft, targetUSD: parseAmount(sanitizeAmountInput(e.target.value)) })}
               />
             </div>
             <div className="form-row">
@@ -121,7 +121,7 @@ export function GoalsView({ goals, onChange }: Props) {
                 inputMode="decimal"
                 value={draft.savedUSD ? digits(draft.savedUSD) : ''}
                 placeholder="0"
-                onChange={(e) => setDraft({ ...draft, savedUSD: parseAmount(e.target.value) })}
+                onChange={(e) => setDraft({ ...draft, savedUSD: parseAmount(sanitizeAmountInput(e.target.value)) })}
               />
             </div>
           </div>

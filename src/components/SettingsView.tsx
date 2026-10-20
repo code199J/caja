@@ -1,5 +1,5 @@
 import type { Goal, IncomeEntry, Settings } from '../types'
-import { digits, parseAmount, usd } from '../lib/format'
+import { digits, parseAmount, sanitizeAmountInput, usd } from '../lib/format'
 
 interface Props {
   settings: Settings
@@ -56,7 +56,7 @@ export function SettingsView({ settings, onChange, goals, history, onImport }: P
             inputMode="decimal"
             value={settings.fixedExpensesUSD ? digits(settings.fixedExpensesUSD) : ''}
             placeholder="350"
-            onChange={(e) => set('fixedExpensesUSD', parseAmount(e.target.value))}
+            onChange={(e) => set('fixedExpensesUSD', parseAmount(sanitizeAmountInput(e.target.value)))}
           />
           <span className="hint">
             Comida, pasajes, servicios, internet, teléfono. Es la base de todo: sin esto la app reparte a
@@ -95,7 +95,7 @@ export function SettingsView({ settings, onChange, goals, history, onImport }: P
               inputMode="decimal"
               value={settings.reserveSavedUSD ? digits(settings.reserveSavedUSD) : ''}
               placeholder="0"
-              onChange={(e) => set('reserveSavedUSD', parseAmount(e.target.value))}
+              onChange={(e) => set('reserveSavedUSD', parseAmount(sanitizeAmountInput(e.target.value)))}
             />
           </div>
         </div>
@@ -135,7 +135,7 @@ export function SettingsView({ settings, onChange, goals, history, onImport }: P
             inputMode="decimal"
             value={settings.custodySplitUSD ? digits(settings.custodySplitUSD) : ''}
             placeholder="400"
-            onChange={(e) => set('custodySplitUSD', parseAmount(e.target.value))}
+            onChange={(e) => set('custodySplitUSD', parseAmount(sanitizeAmountInput(e.target.value)))}
           />
           <span className="hint">
             Si el colchón que vas a apartar pasa de este monto, la app lo parte entre Binance y efectivo
