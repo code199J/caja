@@ -41,6 +41,7 @@ export default function App() {
   const [source, setSource] = useState<Source>('efectivo_usd')
   const [amountRaw, setAmountRaw] = useState('')
   const [reason, setReason] = useState('')
+  const [distMode, setDistMode] = useState<'auto' | 'manual'>('auto')
   const [submitted, setSubmitted] = useState(false)
   const [toast, setToast] = useState('')
   const [toastUndo, setToastUndo] = useState<(() => void) | null>(null)
@@ -274,6 +275,8 @@ export default function App() {
             setSource={setSource}
             reason={reason}
             setReason={setReason}
+            distMode={distMode}
+            setDistMode={setDistMode}
             rates={rates}
             busy={loadingRates}
             onSubmit={() => void handleSubmit()}

@@ -10,6 +10,8 @@ import { IconArrow } from './icons'
 
 export type Source = 'efectivo_usd' | 'binance' | 'banesco'
 
+export type DistMode = 'auto' | 'manual'
+
 interface Props {
   amountRaw: string
   setAmountRaw: (v: string) => void
@@ -19,6 +21,8 @@ interface Props {
   setSource: (s: Source) => void
   reason: string
   setReason: (v: string) => void
+  distMode: DistMode
+  setDistMode: (m: DistMode) => void
   rates: Rates
   busy: boolean
   onSubmit: () => void
@@ -26,6 +30,11 @@ interface Props {
 
 const USD_CHIPS = [10, 20, 50, 100, 250, 500]
 const VES_CHIPS = [1000, 5000, 10000, 25000, 50000, 100000]
+
+const GUIDANCE = {
+  USD: 'Entran dólares → la app consulta tasas y decide: compra USDT si conviene, deja en efectivo lo que vas a gastar.',
+  VES: 'Entran bolívares → la app los valúa al paralelo y decide: compra USDT si conviene, deja en Bs lo que vas a gastar.',
+}
 
 export function AmountPanel({
   amountRaw,
@@ -36,6 +45,8 @@ export function AmountPanel({
   setSource,
   reason,
   setReason,
+  distMode,
+  setDistMode,
   rates,
   busy,
   onSubmit,
@@ -118,6 +129,8 @@ export function AmountPanel({
         )}
       </div>
 
+      <div className="guidance">{GUIDANCE[currency]}</div>
+
       <div className="source-row">
         <div className="chips">
           {(currency === 'USD' ? USD_CHIPS : VES_CHIPS).map((v) => (
@@ -153,6 +166,21 @@ export function AmountPanel({
               Banesco
             </button>
           )}
+        </div>
+      </div>
+
+      <div className="source-row">
+        <span>Reparto</span>
+        <div className="segmented" role="group" aria-label="Modo de reparto">
+          <button
+            aria-pressed={distMode === 'auto'}
+            onClick={() => setDistMode('auto')}
+          >
+            Auto
+          </button>
+          <button aria-pressed={distMode === 'manual'} onClick={() => setDistMode('manual')}>
+            Manual
+          </button>
         </div>
       </div>
 

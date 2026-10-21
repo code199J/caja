@@ -40,8 +40,8 @@
   --fs-title: 22px;
   --fs-section: 16px;
   --fs-kpi: 20px;
-  --fs-body: 14px;
-  --fs-small: 12px;
+  --fs-body: 15px;
+  --fs-small: 13px;
   --fs-micro: 12px;
   --mono: 'Spline Sans Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --sans: 'Familjen Grotesk', 'Helvetica Neue', Arial, sans-serif;
@@ -187,6 +187,11 @@ button, input, select { font: inherit; color: inherit; }
   margin-top: 8px; font-size: var(--fs-small); color: var(--faint);
 }
 .amount-equiv b { font-family: var(--mono); font-weight: 500; color: var(--muted); letter-spacing: -0.03em; }
+.guidance {
+  margin-top: 10px; padding: 10px 12px; background: var(--raised);
+  border: 1px solid var(--border); border-radius: var(--radius-control);
+  font-size: var(--fs-small); color: var(--muted); line-height: 1.5;
+}
 .source-row { margin-top: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: var(--fs-small); color: var(--faint); }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip {
