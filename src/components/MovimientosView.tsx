@@ -249,7 +249,7 @@ export function MovimientosView({
                 <div>
                   <div
                     className="total"
-                    style={{ color: m.kind === 'egreso' ? 'var(--guayaba-ink)' : 'var(--verde)' }}
+                    style={{ color: m.kind === 'egreso' ? 'var(--ink)' : 'var(--positive)' }}
                   >
                     {m.kind === 'egreso' ? '−' : '+'}
                     {m.currency === 'USD' ? usd(m.amount) : bs(m.amount)}

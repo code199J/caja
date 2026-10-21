@@ -35,7 +35,7 @@ export function RateRail({ rates, loading, onRefresh }: Props) {
       <div className="rate-note" data-warn={Boolean(rates.stale)}>
         <button className="refresh" onClick={onRefresh} data-busy={loading} aria-label="Actualizar tasas">
           <IconRefresh />
-          {loading ? 'Consultando' : relativeTime(rates.fetchedAt)}
+          {loading ? 'Consultando…' : relativeTime(rates.fetchedAt)}
         </button>
         <span>
           {rates.stale

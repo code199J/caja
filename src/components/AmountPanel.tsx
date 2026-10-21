@@ -90,6 +90,8 @@ export function AmountPanel({
           }}
           inputMode="decimal"
           placeholder="0,00"
+          autoComplete="off"
+          name="amount"
           aria-label={currency === 'USD' ? 'Monto en dólares' : 'Monto en bolívares'}
         />
       </div>
@@ -162,6 +164,8 @@ export function AmountPanel({
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           maxLength={80}
+          autoComplete="off"
+          name="reason"
         />
       </div>
 

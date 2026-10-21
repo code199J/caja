@@ -43,7 +43,21 @@ export default function App() {
   const [reason, setReason] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [toast, setToast] = useState('')
+  const [toastUndo, setToastUndo] = useState<(() => void) | null>(null)
   const planRef = useRef<HTMLDivElement | null>(null)
+
+  // Sync tab with URL hash
+  useEffect(() => {
+    const hash = window.location.hash.slice(1)
+    const validTabs: Tab[] = ['repartir', 'movimientos', 'analisis', 'metas', 'ajustes']
+    if (hash && validTabs.includes(hash as Tab)) setTab(hash as Tab)
+    else if (!hash) setTab('repartir')
+  }, [])
+  const handleTabChange = (t: Tab) => {
+    setTab(t)
+    window.location.hash = t
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const refresh = useCallback(async (force = true) => {
     setLoadingRates(true)
@@ -144,10 +158,6 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleDeleteExpense = (id: string) => {
-    setExpenses((e) => e.filter((x) => x.id !== id))
-    setToast('Gasto borrado.')
-  }
 
   const handleImport = (data: unknown) => {
     const clean = sanitizeBackup(data, rates.paralelo || rates.bcv || 0)
@@ -167,6 +177,7 @@ export default function App() {
   }
 
   const handleDelete = (entry: IncomeEntry) => {
+    const deletedEntry = entry
     setHistory((h) => h.filter((e) => e.id !== entry.id))
     if (!entry.applied) {
       setToast('Ingreso borrado (era de una versión vieja: no toqué metas ni colchón).')
@@ -186,7 +197,39 @@ export default function App() {
         }),
       )
     }
-    setToast('Movimiento borrado y montos devueltos.')
+    const undo = () => {
+      setHistory((h) => [deletedEntry, ...h])
+      if (deletedEntry.applied) {
+        if (deletedEntry.applied.reserve > 0) {
+          setSettings((s) => ({ ...s, reserveSavedUSD: s.reserveSavedUSD + deletedEntry.applied!.reserve }))
+        }
+        if (deletedEntry.applied.goals.length) {
+          setGoals((gs) =>
+            gs.map((g) => {
+              const add = deletedEntry.applied!.goals.find((a) => a.id === g.id)
+              return add ? { ...g, savedUSD: g.savedUSD + add.usd } : g
+            }),
+          )
+        }
+      }
+      setToastUndo(null)
+      setToast('Ingreso restaurado.')
+    }
+    setToastUndo(undo)
+    setToast('Ingreso borrado.')
+  }
+
+  const handleDeleteExpense = (id: string) => {
+    const deleted = expenses.find((e) => e.id === id)
+    if (!deleted) return
+    setExpenses((e) => e.filter((x) => x.id !== id))
+    const undo = () => {
+      setExpenses((e) => [deleted, ...e])
+      setToastUndo(null)
+      setToast('Gasto restaurado.')
+    }
+    setToastUndo(undo)
+    setToast('Gasto borrado.')
   }
 
   const needsSetup = settings.fixedExpensesUSD <= 0
@@ -195,7 +238,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="wordmark">
-          <strong>caja</strong>
+          <h1>caja</h1>
           <span>dónde poner la plata</span>
         </div>
       </header>
@@ -289,8 +332,17 @@ export default function App() {
         />
       )}
 
-      <Nav tab={tab} onChange={setTab} />
-      {toast && <div className="toast">{toast}</div>}
+      <Nav tab={tab} onChange={handleTabChange} />
+      {toast && (
+        <div className="toast" role="status" aria-live="polite" aria-atomic="true">
+          {toast}
+          {toastUndo && (
+            <button className="toast-action" onClick={() => { toastUndo(); setToastUndo(null); }}>
+              Deshacer
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -5,10 +5,10 @@ import type { Source } from './AmountPanel'
 import { IconCheck } from './icons'
 
 const COLOR: Record<Bucket['id'], string> = {
-  gastos: '#141815',
-  colchon: '#0e6b4e',
-  meta: '#e23f4e',
-  libre: '#9aa093',
+  gastos: '#141815',           // ink
+  colchon: '#5c635b',          // mid grey (neutro)
+  meta: '#E5404F',             // guayaba - THE hue (main data element)
+  libre: '#c9cdc0',            // light grey
 }
 
 function bucketSub(b: Bucket, rates: Rates, source: Source, currency: Currency) {

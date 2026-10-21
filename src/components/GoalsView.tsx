@@ -59,7 +59,7 @@ export function GoalsView({ goals, onChange }: Props) {
             <div className="goal-row" key={g.id}>
               <div className="goal-top">
                 <div>
-                  <div className="goal-name">{g.name}</div>
+                  <div className="goal-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.name}</div>
                   <div className="goal-meta">
                     {usd(g.savedUSD)} de {usd(g.targetUSD)} · {g.deadline} ·{' '}
                     {days < 0 ? 'vencida' : `${days} días`} ·{' '}
