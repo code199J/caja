@@ -1,26 +1,29 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { Currency, Goal, IncomeEntry, Rates, Settings } from './types'
+import type { Currency, ExpenseEntry, Goal, IncomeEntry, Rates, Settings } from './types'
 import { EMPTY_RATES } from './types'
 import { buildPlan } from './engine/allocate'
 import { fetchRates } from './engine/rates'
 import {
   coveredThisMonth,
-  DEFAULT_SETTINGS,
+  loadExpenses,
   loadGoals,
   loadHistory,
   loadRates,
   loadSettings,
   newId,
+  saveExpenses,
   saveGoals,
   saveHistory,
   saveSettings,
 } from './lib/store'
 import { parseAmount, sanitizeAmountInput, usd } from './lib/format'
+import { sanitizeBackup } from './lib/validate'
 import { RateRail } from './components/RateRail'
 import { AmountPanel, type Source } from './components/AmountPanel'
 import { PlanView } from './components/PlanView'
 import { GoalsView } from './components/GoalsView'
-import { HistoryView } from './components/HistoryView'
+import { MovimientosView } from './components/MovimientosView'
+import { AnalisisView } from './components/AnalisisView'
 import { SettingsView } from './components/SettingsView'
 import { Nav, type Tab } from './components/Nav'
 import './styles.css'
@@ -32,10 +35,12 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(() => loadSettings())
   const [goals, setGoals] = useState<Goal[]>(() => loadGoals())
   const [history, setHistory] = useState<IncomeEntry[]>(() => loadHistory())
+  const [expenses, setExpenses] = useState<ExpenseEntry[]>(() => loadExpenses())
 
   const [currency, setCurrency] = useState<Currency>('USD')
   const [source, setSource] = useState<Source>('efectivo_usd')
   const [amountRaw, setAmountRaw] = useState('')
+  const [reason, setReason] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [toast, setToast] = useState('')
   const planRef = useRef<HTMLDivElement | null>(null)
@@ -70,6 +75,7 @@ export default function App() {
   useEffect(() => saveSettings(settings), [settings])
   useEffect(() => saveGoals(goals), [goals])
   useEffect(() => saveHistory(history), [history])
+  useEffect(() => saveExpenses(expenses), [expenses])
 
   useEffect(() => {
     if (!toast) return
@@ -110,6 +116,7 @@ export default function App() {
       usdTotal: plan.usdTotal,
       buckets: plan.buckets,
       verdictAction: plan.verdict.action,
+      note: reason.trim() || undefined,
       snapshot: { bcv: rates.bcv, paralelo: rates.paralelo, usdtBuy: rates.usdtBuy },
       applied: { reserve, goals: goalAdds },
     }
@@ -133,43 +140,51 @@ export default function App() {
     )
     setSubmitted(false)
     setAmountRaw('')
+    setReason('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const handleDeleteExpense = (id: string) => {
+    setExpenses((e) => e.filter((x) => x.id !== id))
+    setToast('Gasto borrado.')
+  }
+
   const handleImport = (data: unknown) => {
-    if (!data || typeof data !== 'object') {
+    const clean = sanitizeBackup(data, rates.paralelo || rates.bcv || 0)
+    if (!clean) {
       setToast('Ese archivo no es un respaldo de Caja.')
       return
     }
-    const d = data as {
-      settings?: Partial<Settings>
-      goals?: Goal[]
-      history?: IncomeEntry[]
-    }
-    if (d.settings) setSettings({ ...DEFAULT_SETTINGS, ...d.settings })
-    if (Array.isArray(d.goals)) setGoals(d.goals)
-    if (Array.isArray(d.history)) setHistory(d.history)
-    const hadData = Boolean(d.settings || d.goals?.length || d.history?.length)
-    setToast(hadData ? 'Respaldo importado: datos reemplazados.' : 'Ese respaldo está vacío.')
+    setSettings(clean.settings)
+    setGoals(clean.goals)
+    setHistory(clean.history)
+    setExpenses(clean.expenses)
+    setToast(
+      clean.hadData
+        ? 'Respaldo importado: lo raro se descartó y lo válido quedó.'
+        : 'Ese respaldo está vacío o no tenía datos que entienda.',
+    )
   }
 
   const handleDelete = (entry: IncomeEntry) => {
     setHistory((h) => h.filter((e) => e.id !== entry.id))
-    if (entry.applied) {
-      if (entry.applied.reserve > 0) {
-        setSettings((s) => ({
-          ...s,
-          reserveSavedUSD: Math.max(0, s.reserveSavedUSD - entry.applied!.reserve),
-        }))
-      }
-      if (entry.applied.goals.length) {
-        setGoals((gs) =>
-          gs.map((g) => {
-            const add = entry.applied!.goals.find((a) => a.id === g.id)
-            return add ? { ...g, savedUSD: Math.max(0, g.savedUSD - add.usd) } : g
-          }),
-        )
-      }
+    if (!entry.applied) {
+      setToast('Ingreso borrado (era de una versión vieja: no toqué metas ni colchón).')
+      return
+    }
+    if (entry.applied.reserve > 0) {
+      setSettings((s) => ({
+        ...s,
+        reserveSavedUSD: Math.max(0, s.reserveSavedUSD - entry.applied!.reserve),
+      }))
+    }
+    if (entry.applied.goals.length) {
+      setGoals((gs) =>
+        gs.map((g) => {
+          const add = entry.applied!.goals.find((a) => a.id === g.id)
+          return add ? { ...g, savedUSD: Math.max(0, g.savedUSD - add.usd) } : g
+        }),
+      )
     }
     setToast('Movimiento borrado y montos devueltos.')
   }
@@ -214,6 +229,8 @@ export default function App() {
             }}
             source={source}
             setSource={setSource}
+            reason={reason}
+            setReason={setReason}
             rates={rates}
             busy={loadingRates}
             onSubmit={() => void handleSubmit()}
@@ -245,8 +262,21 @@ export default function App() {
       )}
 
       {tab === 'metas' && <GoalsView goals={goals} onChange={setGoals} />}
-      {tab === 'historial' && (
-        <HistoryView history={history} rates={rates} onDelete={handleDelete} />
+      {tab === 'movimientos' && (
+        <MovimientosView
+          history={history}
+          expenses={expenses}
+          rates={rates}
+          onAddExpense={(e) => {
+            setExpenses((prev) => [e, ...prev])
+            setToast(`Gasto guardado: ${usd(e.usdAtRate)}.`)
+          }}
+          onDeleteExpense={handleDeleteExpense}
+          onDeleteIncome={handleDelete}
+        />
+      )}
+      {tab === 'analisis' && (
+        <AnalisisView history={history} expenses={expenses} settings={settings} />
       )}
       {tab === 'ajustes' && (
         <SettingsView
@@ -254,6 +284,7 @@ export default function App() {
           onChange={setSettings}
           goals={goals}
           history={history}
+          expenses={expenses}
           onImport={handleImport}
         />
       )}

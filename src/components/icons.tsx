@@ -46,6 +46,19 @@ export const IconSliders = () => (
   </svg>
 )
 
+export const IconMove = () => (
+  <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    <path d="m7.5 7.5 2.5-2.5 2.5 2.5M12.5 12.5 10 15l-2.5-2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const IconChart = () => (
+  <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M3 16.5V10M8.2 16.5V5.5M13.4 16.5v-8M17 16.5v-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+  </svg>
+)
+
 export const IconCheck = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
     <path d="m3 8.5 3.2 3.2L13 4.8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />

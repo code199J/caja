@@ -1,8 +1,7 @@
-import type { Goal, IncomeEntry, Rates, Settings } from '../types'
+import type { ExpenseEntry, Goal, IncomeEntry, Rates, Settings } from '../types'
 import { EMPTY_RATES } from '../types'
 
 const PREFIX = 'caja.v1.'
-
 function read<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(PREFIX + key)
@@ -49,6 +48,9 @@ export const saveGoals = (g: Goal[]) => write('goals', g)
 
 export const loadHistory = () => readList<IncomeEntry>('history')
 export const saveHistory = (h: IncomeEntry[]) => write('history', h.slice(0, 400))
+
+export const loadExpenses = () => readList<ExpenseEntry>('expenses')
+export const saveExpenses = (e: ExpenseEntry[]) => write('expenses', e.slice(0, 600))
 
 export const loadRates = (): Rates | null => {
   const r = read<Rates>('rates', EMPTY_RATES)

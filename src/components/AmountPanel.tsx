@@ -17,6 +17,8 @@ interface Props {
   setCurrency: (c: Currency) => void
   source: Source
   setSource: (s: Source) => void
+  reason: string
+  setReason: (v: string) => void
   rates: Rates
   busy: boolean
   onSubmit: () => void
@@ -32,6 +34,8 @@ export function AmountPanel({
   setCurrency,
   source,
   setSource,
+  reason,
+  setReason,
   rates,
   busy,
   onSubmit,
@@ -148,6 +152,17 @@ export function AmountPanel({
             </button>
           )}
         </div>
+      </div>
+
+      <div className="form-row" style={{ marginTop: 14 }}>
+        <input
+          className="input"
+          placeholder="¿De qué fue? Cliente, trabajo, motivo… (opcional)"
+          aria-label="Motivo del ingreso"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          maxLength={80}
+        />
       </div>
 
       <button className="primary" disabled={amount <= 0 || busy} onClick={onSubmit}>

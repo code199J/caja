@@ -92,6 +92,12 @@ export function todayISO() {
   return d.toISOString().slice(0, 10)
 }
 
+/** Clave de mes en hora local: "2026-10" (coincide con coveredThisMonth) */
+export function monthKeyLocal(ts: number): string {
+  const d = new Date(ts)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
 export function monthLabel(ts: number) {
   return new Intl.DateTimeFormat('es-VE', { month: 'long', year: 'numeric' }).format(ts)
 }

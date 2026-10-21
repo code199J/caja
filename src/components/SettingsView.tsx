@@ -1,4 +1,4 @@
-import type { Goal, IncomeEntry, Settings } from '../types'
+import type { ExpenseEntry, Goal, IncomeEntry, Settings } from '../types'
 import { digits, parseAmount, sanitizeAmountInput, usd } from '../lib/format'
 
 interface Props {
@@ -6,10 +6,11 @@ interface Props {
   onChange: (s: Settings) => void
   goals: Goal[]
   history: IncomeEntry[]
+  expenses: ExpenseEntry[]
   onImport: (data: unknown) => void
 }
 
-export function SettingsView({ settings, onChange, goals, history, onImport }: Props) {
+export function SettingsView({ settings, onChange, goals, history, expenses, onImport }: Props) {
   const importFile = (file: File) => {
     const reader = new FileReader()
     reader.onload = () => {
@@ -26,7 +27,11 @@ export function SettingsView({ settings, onChange, goals, history, onImport }: P
     onChange({ ...settings, [key]: value })
 
   const exportBackup = () => {
-    const data = JSON.stringify({ settings, goals, history, exportedAt: new Date().toISOString() }, null, 2)
+    const data = JSON.stringify(
+      { settings, goals, history, expenses, exportedAt: new Date().toISOString() },
+      null,
+      2,
+    )
     const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }))
     const a = document.createElement('a')
     a.href = url

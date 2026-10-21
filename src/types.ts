@@ -92,6 +92,51 @@ export interface IncomeEntry {
   applied?: { reserve: number; goals: Array<{ id: string; usd: number }> }
 }
 
+export type CategoryId =
+  | 'comida'
+  | 'transporte'
+  | 'servicios'
+  | 'salud'
+  | 'herramientas'
+  | 'insumos'
+  | 'familiar'
+  | 'ocio'
+  | 'deuda'
+  | 'otros'
+
+export interface CategoryMeta {
+  id: CategoryId
+  name: string
+}
+
+export const EXPENSE_CATEGORIES: CategoryMeta[] = [
+  { id: 'comida', name: 'Comida' },
+  { id: 'transporte', name: 'Transporte' },
+  { id: 'servicios', name: 'Servicios' },
+  { id: 'salud', name: 'Salud' },
+  { id: 'herramientas', name: 'Herramientas' },
+  { id: 'insumos', name: 'Insumos' },
+  { id: 'familiar', name: 'Familiar' },
+  { id: 'ocio', name: 'Ocio' },
+  { id: 'deuda', name: 'Deuda' },
+  { id: 'otros', name: 'Otros' },
+]
+
+export interface ExpenseEntry {
+  id: string
+  at: number
+  amount: number
+  currency: Currency
+  category: CategoryId
+  reason: string
+  paidFrom: AccountId
+  usdAtRate: number
+  snapshot?: { bcv: number; paralelo: number; usdtBuy: number }
+}
+
+export const categoryMeta = (id: CategoryId): CategoryMeta =>
+  EXPENSE_CATEGORIES.find((c) => c.id === id) ?? EXPENSE_CATEGORIES[EXPENSE_CATEGORIES.length - 1]
+
 export interface AccountMeta {
   id: AccountId
   name: string

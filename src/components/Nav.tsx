@@ -1,11 +1,12 @@
-import { IconList, IconSliders, IconSplit, IconTarget } from './icons'
+import { IconChart, IconList, IconMove, IconSliders, IconSplit, IconTarget } from './icons'
 
-export type Tab = 'repartir' | 'metas' | 'historial' | 'ajustes'
+export type Tab = 'repartir' | 'movimientos' | 'analisis' | 'metas' | 'ajustes'
 
 const TABS: Array<{ id: Tab; label: string; icon: () => React.ReactElement }> = [
   { id: 'repartir', label: 'Repartir', icon: IconSplit },
+  { id: 'movimientos', label: 'Movimientos', icon: IconMove },
+  { id: 'analisis', label: 'Análisis', icon: IconChart },
   { id: 'metas', label: 'Metas', icon: IconTarget },
-  { id: 'historial', label: 'Historial', icon: IconList },
   { id: 'ajustes', label: 'Ajustes', icon: IconSliders },
 ]
 
@@ -30,3 +31,6 @@ export function Nav({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void })
     </nav>
   )
 }
+
+// IconList ya no se usa en las pestañas, se mantiene por si vuelve al diseño
+void IconList
