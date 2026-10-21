@@ -6,9 +6,10 @@ interface Props {
   rates: Rates
   loading: boolean
   onRefresh: () => void
+  ariaLive?: 'polite' | 'assertive'
 }
 
-export function RateRail({ rates, loading, onRefresh }: Props) {
+export function RateRail({ rates, loading, onRefresh, ariaLive = 'polite' }: Props) {
   const gap = rates.bcv > 0 ? (rates.paralelo / rates.bcv - 1) * 100 : 0
   const premium =
     rates.paralelo > 0 && rates.usdtBuy > 0 ? (rates.usdtBuy / rates.paralelo - 1) * 100 : 0
@@ -33,7 +34,7 @@ export function RateRail({ rates, loading, onRefresh }: Props) {
         <span className="sub">{rates.paralelo ? `brecha ${pct(gap, 0)}` : 'sin datos'}</span>
       </div>
       <div className="rate-note" data-warn={Boolean(rates.stale)}>
-        <button className="refresh" onClick={onRefresh} data-busy={loading} aria-label="Actualizar tasas">
+        <button className="refresh" onClick={onRefresh} data-busy={loading} aria-label="Actualizar tasas" aria-live={loading ? ariaLive : 'off'}>
           <IconRefresh />
           {loading ? 'Consultando…' : relativeTime(rates.fetchedAt)}
         </button>

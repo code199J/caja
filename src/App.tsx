@@ -245,7 +245,7 @@ export default function App() {
 
       {tab === 'repartir' && (
         <>
-          <RateRail rates={rates} loading={loadingRates} onRefresh={() => void refresh(true)} />
+          <RateRail rates={rates} loading={loadingRates} onRefresh={() => void refresh(true)} aria-live="polite" />
 
           {needsSetup && (
             <div className="empty" style={{ marginTop: 16 }}>

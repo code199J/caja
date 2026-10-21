@@ -126,6 +126,8 @@ export function MovimientosView({
               value={draft.amountRaw}
               onChange={(e) => setDraft({ ...draft, amountRaw: e.target.value })}
               onKeyDown={(e) => e.key === 'Enter' && save()}
+              autoComplete="off"
+              name="expense-amount"
             />
             <span className="hint">
               {needsRate
@@ -170,6 +172,8 @@ export function MovimientosView({
               value={draft.reason}
               onChange={(e) => setDraft({ ...draft, reason: e.target.value })}
               onKeyDown={(e) => e.key === 'Enter' && save()}
+              autoComplete="off"
+              name="expense-reason"
             />
           </div>
 

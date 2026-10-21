@@ -11,7 +11,7 @@
   --ink: #141815;
   --muted: #4a5148;
   --faint: #656b60;
-  --placeholder: #79806f;
+  --placeholder: #717665;
   --primary: #141815;
   --primary-hover: #232a26;
   --secondary: #e4e6dd;
@@ -42,7 +42,7 @@
   --fs-kpi: 20px;
   --fs-body: 14px;
   --fs-small: 12px;
-  --fs-micro: 11px;
+  --fs-micro: 12px;
   --mono: 'Spline Sans Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --sans: 'Familjen Grotesk', 'Helvetica Neue', Arial, sans-serif;
   color-scheme: light;
