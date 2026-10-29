@@ -25,6 +25,7 @@ import { GoalsView } from './components/GoalsView'
 import { MovimientosView } from './components/MovimientosView'
 import { AnalisisView } from './components/AnalisisView'
 import { SettingsView } from './components/SettingsView'
+import { CuentasView } from './components/CuentasView'
 import { Nav, type Tab } from './components/Nav'
 import './styles.css'
 
@@ -50,7 +51,7 @@ export default function App() {
   // Sync tab with URL hash
   useEffect(() => {
     const hash = window.location.hash.slice(1)
-    const validTabs: Tab[] = ['repartir', 'movimientos', 'analisis', 'metas', 'ajustes']
+    const validTabs: Tab[] = ['repartir', 'movimientos', 'analisis', 'metas', 'ajustes', 'cuentas']
     if (hash && validTabs.includes(hash as Tab)) setTab(hash as Tab)
     else if (!hash) setTab('repartir')
   }, [])
@@ -333,6 +334,9 @@ export default function App() {
           expenses={expenses}
           onImport={handleImport}
         />
+      )}
+      {tab === 'cuentas' && (
+        <CuentasView history={history} expenses={expenses} rates={rates} />
       )}
 
       <Nav tab={tab} onChange={handleTabChange} />

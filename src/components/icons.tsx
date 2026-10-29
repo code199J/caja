@@ -64,3 +64,10 @@ export const IconCheck = () => (
     <path d="m3 8.5 3.2 3.2L13 4.8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
+
+export const IconWallet = () => (
+  <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <rect x="2" y="4" width="16" height="12" rx="1.4" stroke="currentColor" strokeWidth="1.3" />
+    <path d="M4 8h12M4 12h12M4 16h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+)

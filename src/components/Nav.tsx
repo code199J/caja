@@ -1,6 +1,6 @@
-import { IconChart, IconList, IconMove, IconSliders, IconSplit, IconTarget } from './icons'
+import { IconChart, IconList, IconMove, IconSliders, IconSplit, IconTarget, IconWallet } from './icons'
 
-export type Tab = 'repartir' | 'movimientos' | 'analisis' | 'metas' | 'ajustes'
+export type Tab = 'repartir' | 'movimientos' | 'analisis' | 'metas' | 'ajustes' | 'cuentas'
 
 const TABS: Array<{ id: Tab; label: string; icon: () => React.ReactElement }> = [
   { id: 'repartir', label: 'Repartir', icon: IconSplit },
@@ -8,6 +8,7 @@ const TABS: Array<{ id: Tab; label: string; icon: () => React.ReactElement }> = 
   { id: 'analisis', label: 'Análisis', icon: IconChart },
   { id: 'metas', label: 'Metas', icon: IconTarget },
   { id: 'ajustes', label: 'Ajustes', icon: IconSliders },
+  { id: 'cuentas', label: 'Cuentas', icon: IconWallet },
 ]
 
 export function Nav({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void }) {
