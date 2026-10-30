@@ -82,7 +82,7 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
   const [openPayment, setOpenPayment] = useState(false)
 
   /* ───────────── Nueva inversión ───────────── */
-  const [invProductId, setInvProductId] = useState<string>('')
+  const [invName, setInvName] = useState('')
   const [invUnits, setInvUnits] = useState('')
   const [invUnitCost, setInvUnitCost] = useState('')
   const [invFundedFrom, setInvFundedFrom] = useState<AccountId>('efectivo_usd')
@@ -115,8 +115,6 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
   const totalInvested = investments.reduce((s, i) => s + i.totalCostUSD, 0)
   const totalRecovered = investments.reduce((s, i) => s + i.recoveredUSD, 0)
 
-  const activeProducts = products.filter((p) => p.active)
-
   /* ───────────── Handlers ───────────── */
 
   const handleCreateProduct = () => {
@@ -142,20 +140,18 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
   }
 
   const handleCreateInvestment = () => {
-    const product = products.find((p) => p.id === invProductId)
-    if (!product) return
     const units = Number(invUnits)
     const unitCost = parseAmount(invUnitCost)
-    if (!units || units <= 0 || unitCost <= 0) return
+    if (!invName.trim() || !units || units <= 0 || unitCost <= 0) return
     const investment = createInvestment({
-      productId: product.id,
-      productName: product.name,
+      productId: crypto.randomUUID(),
+      productName: invName.trim(),
       units,
       unitCostUSD: unitCost,
       fundedFrom: invFundedFrom,
     })
     setInvestments((prev) => [...prev, investment])
-    setInvProductId('')
+    setInvName('')
     setInvUnits('')
     setInvUnitCost('')
     setInvFundedFrom('efectivo_usd')
@@ -274,7 +270,7 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
       <div style={{ marginBottom: tokens.space[5] }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: tokens.space[3] }}>
           <h2 style={{ fontSize: tokens.fontSize.section, fontWeight: tokens.fontWeight.semibold, color: tokens.color.ink }}>Inversiones activas</h2>
-          <Button variant="ghost" size="sm" onClick={() => setOpenInvestment(true)} disabled={activeProducts.length === 0}>
+          <Button variant="ghost" size="sm" onClick={() => setOpenInvestment(true)}>
             Nueva inversión
           </Button>
         </div>
@@ -409,24 +405,8 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
       <Modal open={openInvestment} onClose={() => setOpenInvestment(false)} title="Nueva inversión">
         <div style={{ marginTop: tokens.space[3] }}>
           <div style={{ marginBottom: tokens.space[3] }}>
-            <div style={{ fontSize: tokens.fontSize.small, color: tokens.color.muted, marginBottom: tokens.space[1] }}>Producto</div>
-            <Select
-              value={invProductId}
-              onChange={(e) => setInvProductId(e.target.value)}
-              disabled={activeProducts.length === 0}
-            >
-              <option value="">Seleccionar producto…</option>
-              {activeProducts.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({usd(p.unitCostUSD)}/u)
-                </option>
-              ))}
-            </Select>
-            {activeProducts.length === 0 && (
-              <div style={{ marginTop: tokens.space[1], fontSize: tokens.fontSize.micro, color: tokens.color.muted }}>
-                Crea primero un producto en la pestaña Productos.
-              </div>
-            )}
+            <div style={{ fontSize: tokens.fontSize.small, color: tokens.color.muted, marginBottom: tokens.space[1] }}>Nombre de la inversión</div>
+            <Input type="text" placeholder="Ej. Compra de mercadería" value={invName} onChange={(e) => setInvName(e.target.value)} />
           </div>
 
           <div style={{ marginBottom: tokens.space[3] }}>
@@ -448,7 +428,7 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
             <Button variant="ghost" size="sm" onClick={() => setOpenInvestment(false)}>
               Cancelar
             </Button>
-            <Button variant="primary" size="sm" onClick={handleCreateInvestment} disabled={!activeProducts.length}>
+            <Button variant="primary" size="sm" onClick={handleCreateInvestment}>
               Registrar inversión
             </Button>
           </div>
