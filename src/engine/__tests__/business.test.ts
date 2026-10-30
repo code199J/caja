@@ -169,20 +169,38 @@ describe('calculateInvestmentROI', () => {
 })
 
 describe('getInvestmentStatus', () => {
-  it('devuelve closed cuando todas las CxC están pagadas', () => {
-    const inv = { id: 'inv-1', status: 'active' as const, recoveredUSD: 300, totalCostUSD: 300 } as any
+  it('devuelve closed cuando todas las unidades vendidas Y todas las CxC pagadas', () => {
+    const inv = { id: 'inv-1', status: 'active' as const, recoveredUSD: 300, totalCostUSD: 300, units: 10 } as any
     const receivables = [
-      { id: 'rc-1', investmentId: 'inv-1', status: 'paid' as const },
-      { id: 'rc-2', investmentId: 'inv-1', status: 'paid' as const },
+      { id: 'rc-1', investmentId: 'inv-1', status: 'paid' as const, units: 5 },
+      { id: 'rc-2', investmentId: 'inv-1', status: 'paid' as const, units: 5 },
     ] as any[]
 
     expect(getInvestmentStatus(inv, receivables)).toBe('closed')
   })
 
   it('devuelve active cuando hay CxC pendientes', () => {
-    const inv = { id: 'inv-1', status: 'active' as const, recoveredUSD: 100, totalCostUSD: 300 } as any
+    const inv = { id: 'inv-1', status: 'active' as const, recoveredUSD: 100, totalCostUSD: 300, units: 10 } as any
     const receivables = [
-      { id: 'rc-1', investmentId: 'inv-1', status: 'pending' as const },
+      { id: 'rc-1', investmentId: 'inv-1', status: 'pending' as const, units: 5 },
+    ] as any[]
+
+    expect(getInvestmentStatus(inv, receivables)).toBe('active')
+  })
+
+  it('devuelve recovered si se recuperó el costo pero faltan unidades por vender', () => {
+    const inv = { id: 'inv-1', status: 'active' as const, recoveredUSD: 300, totalCostUSD: 300, units: 10 } as any
+    const receivables = [
+      { id: 'rc-1', investmentId: 'inv-1', status: 'paid' as const, units: 5 },
+    ] as any[]
+
+    expect(getInvestmentStatus(inv, receivables)).toBe('recovered')
+  })
+
+  it('devuelve active si no se han vendido todas las unidades aunque estén pagadas', () => {
+    const inv = { id: 'inv-1', status: 'active' as const, recoveredUSD: 150, totalCostUSD: 300, units: 10 } as any
+    const receivables = [
+      { id: 'rc-1', investmentId: 'inv-1', status: 'paid' as const, units: 5 },
     ] as any[]
 
     expect(getInvestmentStatus(inv, receivables)).toBe('active')

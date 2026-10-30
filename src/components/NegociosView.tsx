@@ -251,11 +251,6 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
     setPaymentAmount('')
     setPaymentNote('')
 
-    // Notificar sobrante a caja personal para que fluya a Repartir
-    if (result.toPersonalCaja > 0) {
-      onSurplusReady(result.toPersonalCaja, selectedAccount, paymentNote || `Cobro: ${receivables[rcIndex].client}`)
-    }
-
     // Si la inversión se cerró, abrir modal de resumen
     if (justClosed && updatedInv) {
       setClosingInvestment(updatedInv)

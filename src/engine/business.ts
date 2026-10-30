@@ -287,7 +287,9 @@ export function getInvestmentStatus(
 ): 'active' | 'recovered' | 'closed' {
   if (investment.status === 'closed') return 'closed'
   const linkedReceivables = receivables.filter((r) => r.investmentId === investment.id)
+  const unitsInReceivables = linkedReceivables.reduce((s, r) => s + r.units, 0)
+  const allUnitsSold = unitsInReceivables >= investment.units
   const allPaid = linkedReceivables.length > 0 && linkedReceivables.every((r) => r.status === 'paid')
-  if (allPaid) return 'closed'
+  if (allUnitsSold && allPaid) return 'closed'
   return investment.recoveredUSD >= investment.totalCostUSD ? 'recovered' : 'active'
 }
