@@ -1,10 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { Currency, ExpenseEntry, Goal, IncomeEntry, Rates, Settings } from './types'
 import { EMPTY_RATES } from './types'
-import { buildPlan } from './engine/allocate'
 import { fetchRates } from './engine/rates'
 import {
-  coveredThisMonth,
   loadExpenses,
   loadGoals,
   loadHistory,
@@ -16,17 +14,19 @@ import {
   saveHistory,
   saveSettings,
 } from './lib/store'
-import { parseAmount, sanitizeAmountInput, usd } from './lib/format'
+import { usd } from './lib/format'
 import { sanitizeBackup } from './lib/validate'
 import { RateRail } from './components/RateRail'
-import { AmountPanel, type Source } from './components/AmountPanel'
-import { PlanView } from './components/PlanView'
 import { GoalsView } from './components/GoalsView'
 import { MovimientosView } from './components/MovimientosView'
 import { AnalisisView } from './components/AnalisisView'
 import { SettingsView } from './components/SettingsView'
 import { CuentasView } from './components/CuentasView'
 import { Nav, type Tab } from './components/Nav'
+import { OnboardingView } from './components/OnboardingView'
+import { NegociosView } from './components/NegociosView'
+import { RepartirStepper } from './components/RepartirStepper'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import './styles.css'
 
 export default function App() {
@@ -38,15 +38,10 @@ export default function App() {
   const [history, setHistory] = useState<IncomeEntry[]>(() => loadHistory())
   const [expenses, setExpenses] = useState<ExpenseEntry[]>(() => loadExpenses())
 
-  const [currency, setCurrency] = useState<Currency>('USD')
-  const [source, setSource] = useState<Source>('efectivo_usd')
-  const [amountRaw, setAmountRaw] = useState('')
-  const [reason, setReason] = useState('')
-  const [distMode, setDistMode] = useState<'auto' | 'manual'>('auto')
-  const [submitted, setSubmitted] = useState(false)
   const [toast, setToast] = useState('')
   const [toastUndo, setToastUndo] = useState<(() => void) | null>(null)
-  const planRef = useRef<HTMLDivElement | null>(null)
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null)
+  const [businessSurplus, setBusinessSurplus] = useState<{ amount: number; account: string; reason: string } | null>(null)
 
   // Sync tab with URL hash
   useEffect(() => {
@@ -88,10 +83,28 @@ export default function App() {
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [refresh])
 
-  useEffect(() => saveSettings(settings), [settings])
-  useEffect(() => saveGoals(goals), [goals])
-  useEffect(() => saveHistory(history), [history])
-  useEffect(() => saveExpenses(expenses), [expenses])
+  useEffect(() => {
+    saveSettings(settings)
+  }, [settings])
+  useEffect(() => {
+    saveGoals(goals)
+  }, [goals])
+  useEffect(() => {
+    saveHistory(history)
+  }, [history])
+  useEffect(() => {
+    saveExpenses(expenses)
+  }, [expenses])
+
+  // Cargar estado de onboarding desde settings
+  useEffect(() => {
+    setOnboardingComplete(settings.fixedExpensesUSD > 0)
+  }, [settings.fixedExpensesUSD])
+
+  const handleOnboardingComplete = (nextSettings: Settings) => {
+    setSettings(nextSettings)
+    setOnboardingComplete(true)
+  }
 
   useEffect(() => {
     if (!toast) return
@@ -99,41 +112,33 @@ export default function App() {
     return () => clearTimeout(t)
   }, [toast])
 
-  const amount = useMemo(() => parseAmount(sanitizeAmountInput(amountRaw)), [amountRaw])
-
-  const covered = useMemo(() => coveredThisMonth(history), [history])
-
-  const plan = useMemo(
-    () => buildPlan({ amount, currency, rates, settings, goals, coveredBefore: covered }),
-    [amount, currency, rates, settings, goals, covered],
-  )
-
-  const handleSubmit = async () => {
-    await refresh(true)
-    setSubmitted(true)
-    requestAnimationFrame(() => {
-      planRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }
-
-  const handleRegister = () => {
-    if (plan.usdTotal <= 0) return
-    const reserve = plan.buckets.filter((b) => b.id === 'colchon').reduce((s, b) => s + b.usd, 0)
-    const goalAdds = plan.buckets
-      .filter((b) => b.id === 'meta' && b.goalId)
-      .map((b) => ({ id: b.goalId!, usd: b.usd }))
+  const handleRegisterFromStepper = (data: {
+    amount: number
+    currency: Currency
+    rateUsed: number
+    usdTotal: number
+    buckets: { id: string; usd: number }[]
+    verdictAction: string
+    reason: string
+    snapshot: { bcv: number; paralelo: number; usdtBuy: number }
+  }) => {
+    if (data.usdTotal <= 0) return
+    const reserve = data.buckets.filter((b) => b.id === 'colchon').reduce((s, b) => s + b.usd, 0)
+    const goalAdds = data.buckets
+      .filter((b) => b.id === 'meta' && 'goalId' in b && b.goalId)
+      .map((b) => ({ id: (b as { goalId?: string }).goalId!, usd: b.usd }))
 
     const entry: IncomeEntry = {
       id: newId(),
       at: Date.now(),
-      amount,
-      currency,
-      rateUsed: currency === 'VES' ? rates.paralelo : 1,
-      usdTotal: plan.usdTotal,
-      buckets: plan.buckets,
-      verdictAction: plan.verdict.action,
-      note: reason.trim() || undefined,
-      snapshot: { bcv: rates.bcv, paralelo: rates.paralelo, usdtBuy: rates.usdtBuy },
+      amount: data.amount,
+      currency: data.currency,
+      rateUsed: data.rateUsed,
+      usdTotal: data.usdTotal,
+      buckets: data.buckets as any,
+      verdictAction: data.verdictAction as any,
+      note: data.reason.trim() || undefined,
+      snapshot: data.snapshot,
       applied: { reserve, goals: goalAdds },
     }
 
@@ -151,12 +156,9 @@ export default function App() {
     const moved = reserve + goalAdds.reduce((s, a) => s + a.usd, 0)
     setToast(
       moved > 0
-        ? `Registrado: ${usd(plan.usdTotal)} repartidos, ${usd(moved)} sumados a colchón y metas.`
-        : `Registrado: reparto de ${usd(plan.usdTotal)} guardado.`,
+        ? `Registrado: ${usd(data.usdTotal)} repartidos, ${usd(moved)} sumados a colchón y metas.`
+        : `Registrado: reparto de ${usd(data.usdTotal)} guardado.`,
     )
-    setSubmitted(false)
-    setAmountRaw('')
-    setReason('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -234,7 +236,13 @@ export default function App() {
     setToast('Gasto borrado.')
   }
 
-  const needsSetup = settings.fixedExpensesUSD <= 0
+  if (onboardingComplete === false) {
+    return (
+      <div className="app">
+        <OnboardingView onComplete={handleOnboardingComplete} />
+      </div>
+    )
+  }
 
   return (
     <div className="app">
@@ -246,97 +254,78 @@ export default function App() {
       </header>
 
       {tab === 'repartir' && (
-        <>
-          <RateRail rates={rates} loading={loadingRates} onRefresh={() => void refresh(true)} aria-live="polite" />
+        <ErrorBoundary tab="Repartir" onReset={() => setTab('repartir')}>
+          <>
+            <RateRail rates={rates} loading={loadingRates} onRefresh={() => void refresh(true)} aria-live="polite" />
 
-          {needsSetup && (
-            <div className="empty" style={{ marginTop: 16 }}>
-              <b>Falta un dato para que el reparto sea real.</b> Dime en Ajustes cuánto son tus gastos
-              fijos del mes y la app deja de adivinar.
-              <div style={{ marginTop: 10 }}>
-                <button className="mini" onClick={() => setTab('ajustes')}>
-                  Poner mis gastos fijos
-                </button>
-              </div>
-            </div>
-          )}
-
-          <AmountPanel
-            amountRaw={amountRaw}
-            setAmountRaw={(v) => {
-              setAmountRaw(v)
-              setSubmitted(false)
-            }}
-            currency={currency}
-            setCurrency={(c) => {
-              setCurrency(c)
-              setSubmitted(false)
-            }}
-            source={source}
-            setSource={setSource}
-            reason={reason}
-            setReason={setReason}
-            distMode={distMode}
-            setDistMode={setDistMode}
-            rates={rates}
-            busy={loadingRates}
-            onSubmit={() => void handleSubmit()}
-          />
-
-          <div ref={planRef} style={{ scrollMarginTop: 12 }}>
-            {submitted && amount > 0 && (
-              <PlanView
-                plan={plan}
-                rates={rates}
-                source={source}
-                currency={currency}
-                onRegister={handleRegister}
-                onEdit={() => {
-                  setSubmitted(false)
-                  window.scrollTo({ top: 0, behavior: 'smooth' })
-                }}
-              />
-            )}
-          </div>
-
-          {!submitted && (
-            <p className="credit">
-              Escribe el monto, toca Repartir y la app consulta BCV, paralelo y USDT P2P en ese momento.
-              Nada sale de tu teléfono.
-            </p>
-          )}
-        </>
+            <RepartirStepper
+              rates={rates}
+              settings={settings}
+              goals={goals}
+              history={history}
+              businessSurplus={businessSurplus}
+              onClearSurplus={() => setBusinessSurplus(null)}
+              onRegister={(data) => {
+                handleRegisterFromStepper(data)
+              }}
+              loadingRates={loadingRates}
+            />
+          </>
+        </ErrorBoundary>
       )}
 
-      {tab === 'metas' && <GoalsView goals={goals} onChange={setGoals} />}
+      {tab === 'metas' && (
+        <ErrorBoundary tab="Metas" onReset={() => setTab('repartir')}>
+          <GoalsView goals={goals} onChange={setGoals} />
+        </ErrorBoundary>
+      )}
       {tab === 'movimientos' && (
-        <MovimientosView
-          history={history}
-          expenses={expenses}
-          rates={rates}
-          onAddExpense={(e) => {
-            setExpenses((prev) => [e, ...prev])
-            setToast(`Gasto guardado: ${usd(e.usdAtRate)}.`)
-          }}
-          onDeleteExpense={handleDeleteExpense}
-          onDeleteIncome={handleDelete}
-        />
+        <ErrorBoundary tab="Movimientos" onReset={() => setTab('repartir')}>
+          <MovimientosView
+            history={history}
+            expenses={expenses}
+            rates={rates}
+            onAddExpense={(e) => {
+              setExpenses((prev) => [e, ...prev])
+              setToast(`Gasto guardado: ${usd(e.usdAtRate)}.`)
+            }}
+            onDeleteExpense={handleDeleteExpense}
+            onDeleteIncome={handleDelete}
+          />
+        </ErrorBoundary>
       )}
       {tab === 'analisis' && (
-        <AnalisisView history={history} expenses={expenses} settings={settings} />
+        <ErrorBoundary tab="Análisis" onReset={() => setTab('repartir')}>
+          <AnalisisView history={history} expenses={expenses} settings={settings} />
+        </ErrorBoundary>
       )}
       {tab === 'ajustes' && (
-        <SettingsView
-          settings={settings}
-          onChange={setSettings}
-          goals={goals}
-          history={history}
-          expenses={expenses}
-          onImport={handleImport}
-        />
+        <ErrorBoundary tab="Ajustes" onReset={() => setTab('repartir')}>
+          <SettingsView
+            settings={settings}
+            onChange={setSettings}
+            goals={goals}
+            history={history}
+            expenses={expenses}
+            onImport={handleImport}
+          />
+        </ErrorBoundary>
       )}
       {tab === 'cuentas' && (
-        <CuentasView history={history} expenses={expenses} rates={rates} />
+        <ErrorBoundary tab="Cuentas" onReset={() => setTab('repartir')}>
+          <CuentasView history={history} expenses={expenses} rates={rates} />
+        </ErrorBoundary>
+      )}
+      {tab === 'negocios' && (
+        <ErrorBoundary tab="Negocios" onReset={() => setTab('repartir')}>
+          <NegociosView
+            rates={rates}
+            onSurplusReady={(amount, account, reason) => {
+              setBusinessSurplus({ amount, account, reason })
+              setTab('repartir')
+            }}
+          />
+        </ErrorBoundary>
       )}
 
       <Nav tab={tab} onChange={handleTabChange} />

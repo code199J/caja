@@ -1,35 +1,5 @@
-import type { ExpenseEntry, Goal, IncomeEntry, Rates, Settings } from '../types'
-import { EMPTY_RATES } from '../types'
-
-const PREFIX = 'caja.v1.'
-function read<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(PREFIX + key)
-    if (!raw) return fallback
-    return { ...fallback, ...(JSON.parse(raw) as object) } as T
-  } catch {
-    return fallback
-  }
-}
-
-function readList<T>(key: string): T[] {
-  try {
-    const raw = localStorage.getItem(PREFIX + key)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? (parsed as T[]) : []
-  } catch {
-    return []
-  }
-}
-
-function write(key: string, value: unknown) {
-  try {
-    localStorage.setItem(PREFIX + key, JSON.stringify(value))
-  } catch {
-    /* almacenamiento lleno o bloqueado: la app sigue funcionando en memoria */
-  }
-}
+import type { BusinessProduct, BusinessInvestment, ExpenseEntry, Goal, IncomeEntry, Rates, Settings, AccountsReceivable } from '../types'
+import { storage } from './storage'
 
 export const DEFAULT_SETTINGS: Settings = {
   fixedExpensesUSD: 0,
@@ -40,23 +10,29 @@ export const DEFAULT_SETTINGS: Settings = {
   expensesInBs: true,
 }
 
-export const loadSettings = () => read<Settings>('settings', DEFAULT_SETTINGS)
-export const saveSettings = (s: Settings) => write('settings', s)
+export const loadSettings = () => storage.loadSettings()
+export const saveSettings = (s: Settings) => storage.saveSettings(s)
 
-export const loadGoals = () => readList<Goal>('goals')
-export const saveGoals = (g: Goal[]) => write('goals', g)
+export const loadGoals = () => storage.loadGoals()
+export const saveGoals = (g: Goal[]) => storage.saveGoals(g)
 
-export const loadHistory = () => readList<IncomeEntry>('history')
-export const saveHistory = (h: IncomeEntry[]) => write('history', h.slice(0, 400))
+export const loadHistory = () => storage.loadHistory()
+export const saveHistory = (h: IncomeEntry[]) => storage.saveHistory(h)
 
-export const loadExpenses = () => readList<ExpenseEntry>('expenses')
-export const saveExpenses = (e: ExpenseEntry[]) => write('expenses', e.slice(0, 600))
+export const loadExpenses = () => storage.loadExpenses()
+export const saveExpenses = (e: ExpenseEntry[]) => storage.saveExpenses(e)
 
-export const loadRates = (): Rates | null => {
-  const r = read<Rates>('rates', EMPTY_RATES)
-  return r.bcv > 0 || r.paralelo > 0 || r.usdtBuy > 0 ? r : null
-}
-export const saveRates = (r: Rates) => write('rates', r)
+export const loadRates = (): Rates | null => storage.loadRates()
+export const saveRates = (r: Rates) => storage.saveRates(r)
+
+export const loadBusinessProducts = () => storage.loadBusinessProducts()
+export const saveBusinessProducts = (p: BusinessProduct[]) => storage.saveBusinessProducts(p)
+
+export const loadBusinessInvestments = () => storage.loadBusinessInvestments()
+export const saveBusinessInvestments = (inv: BusinessInvestment[]) => storage.saveBusinessInvestments(inv)
+
+export const loadBusinessReceivables = () => storage.loadBusinessReceivables()
+export const saveBusinessReceivables = (rc: AccountsReceivable[]) => storage.saveBusinessReceivables(rc)
 
 export const newId = () =>
   Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
@@ -74,4 +50,14 @@ export function coveredThisMonth(history: IncomeEntry[]) {
         .reduce((sum, b) => sum + b.usd, 0)
       return total + gastos
     }, 0)
+}
+
+/** Exportar respaldo completo como string JSON */
+export function exportBackup(): string {
+  return storage.exportBackup()
+}
+
+/** Importar respaldo desde string JSON */
+export function importBackup(json: string): { ok: boolean; hadData: boolean } {
+  return storage.importBackup(json)
 }

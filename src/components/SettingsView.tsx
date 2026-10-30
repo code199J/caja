@@ -1,5 +1,6 @@
 import type { ExpenseEntry, Goal, IncomeEntry, Settings } from '../types'
 import { digits, parseAmount, sanitizeAmountInput, usd } from '../lib/format'
+import { useInstallPrompt } from '../hooks/useInstallPrompt'
 
 interface Props {
   settings: Settings
@@ -11,6 +12,8 @@ interface Props {
 }
 
 export function SettingsView({ settings, onChange, goals, history, expenses, onImport }: Props) {
+  const { canInstall, isInstalled, isIOS, install } = useInstallPrompt()
+
   const importFile = (file: File) => {
     const reader = new FileReader()
     reader.onload = () => {
@@ -179,6 +182,21 @@ export function SettingsView({ settings, onChange, goals, history, expenses, onI
             }}
           />
         </label>
+        {canInstall && (
+          <button
+            className="ghost"
+            onClick={() => {
+              install()
+            }}
+          >
+            {isIOS ? 'Instalar (Compartir → Añadir)' : 'Instalar app'}
+          </button>
+        )}
+        {!canInstall && isInstalled && (
+          <span className="ghost" style={{ color: 'var(--muted)' }}>
+            App instalada
+          </span>
+        )}
       </div>
       <p className="credit">
         Los datos viven en este dispositivo, no en un servidor: lo que registres en la PC no aparece en

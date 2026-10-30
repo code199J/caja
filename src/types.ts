@@ -166,3 +166,59 @@ export const EMPTY_RATES: Rates = {
   source: 'guardado',
   stale: true,
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   NEGOCIOS — Módulo de negocio propio (inversiones, cuentas por cobrar)
+   ═══════════════════════════════════════════════════════════════════ */
+
+export interface BusinessProduct {
+  id: string
+  name: string
+  unitCostUSD: number
+  unitPriceUSD: number
+  currency: Currency
+  active: boolean
+  createdAt: number
+}
+
+export interface BusinessInvestment {
+  id: string
+  productId: string
+  productName: string
+  units: number
+  unitCostUSD: number
+  totalCostUSD: number
+  fundedFrom: AccountId
+  fundedAt: number
+  recoveredUSD: number
+  status: 'active' | 'recovered' | 'closed'
+  createdAt: number
+}
+
+export interface Payment {
+  id: string
+  receivableId: string
+  amountUSD: number
+  currency: Currency
+  rateUsed: number
+  account: AccountId
+  at: number
+  note?: string
+}
+
+export interface AccountsReceivable {
+  id: string
+  investmentId: string
+  productId: string
+  productName: string
+  client: string
+  units: number
+  unitPriceUSD: number
+  currency: Currency
+  totalUSD: number
+  agreedDate: number
+  paidUSD: number
+  status: 'pending' | 'partial' | 'paid' | 'overdue'
+  createdAt: number
+  payments: Payment[]
+}
