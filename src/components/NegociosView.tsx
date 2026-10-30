@@ -85,6 +85,7 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
   const [invName, setInvName] = useState('')
   const [invUnits, setInvUnits] = useState('')
   const [invUnitCost, setInvUnitCost] = useState('')
+  const [invTotalCost, setInvTotalCost] = useState('')
   const [invFundedFrom, setInvFundedFrom] = useState<AccountId>('efectivo_usd')
 
   /* ───────────── Nuevo producto ───────────── */
@@ -142,18 +143,22 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
   const handleCreateInvestment = () => {
     const units = Number(invUnits)
     const unitCost = parseAmount(invUnitCost)
-    if (!invName.trim() || !units || units <= 0 || unitCost <= 0) return
+    const totalCost = parseAmount(invTotalCost)
+    if (!invName.trim() || !units || units <= 0) return
+    if (unitCost <= 0 && totalCost <= 0) return
+    const finalUnitCost = totalCost > 0 ? totalCost / units : unitCost
     const investment = createInvestment({
       productId: crypto.randomUUID(),
       productName: invName.trim(),
       units,
-      unitCostUSD: unitCost,
+      unitCostUSD: finalUnitCost,
       fundedFrom: invFundedFrom,
     })
     setInvestments((prev) => [...prev, investment])
     setInvName('')
     setInvUnits('')
     setInvUnitCost('')
+    setInvTotalCost('')
     setInvFundedFrom('efectivo_usd')
     setOpenInvestment(false)
   }
@@ -417,6 +422,14 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
           <div style={{ marginBottom: tokens.space[3] }}>
             <div style={{ fontSize: tokens.fontSize.small, color: tokens.color.muted, marginBottom: tokens.space[1] }}>Costo por unidad (USD)</div>
             <Input type="text" inputMode="decimal" placeholder="0,00" value={invUnitCost} onChange={(e) => setInvUnitCost(e.target.value)} />
+          </div>
+
+          <div style={{ marginBottom: tokens.space[3] }}>
+            <div style={{ fontSize: tokens.fontSize.small, color: tokens.color.muted, marginBottom: tokens.space[1] }}>Costo total de la inversión (USD)</div>
+            <Input type="text" inputMode="decimal" placeholder="0,00" value={invTotalCost} onChange={(e) => setInvTotalCost(e.target.value)} />
+            <div style={{ marginTop: tokens.space[1], fontSize: tokens.fontSize.micro, color: tokens.color.muted }}>
+              Si lo dejas vacío, se calcula como unidades × costo por unidad.
+            </div>
           </div>
 
           <div style={{ marginBottom: tokens.space[3] }}>
