@@ -29,6 +29,8 @@ export interface CreateInvestmentInput {
   unitCostUSD: number
   fundedFrom: AccountId
   fundedAt?: number
+  expectedSalePriceUSD?: number
+  expectedSaleCurrency?: 'USD' | 'VES' | 'USDT'
 }
 
 export function createInvestment(input: CreateInvestmentInput): BusinessInvestment {
@@ -46,6 +48,8 @@ export function createInvestment(input: CreateInvestmentInput): BusinessInvestme
     recoveredUSD: 0,
     status: 'active',
     createdAt: now,
+    expectedSalePriceUSD: input.expectedSalePriceUSD,
+    expectedSaleCurrency: input.expectedSaleCurrency,
   }
 }
 

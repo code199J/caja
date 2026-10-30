@@ -86,7 +86,15 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
   const [invUnits, setInvUnits] = useState('')
   const [invUnitCost, setInvUnitCost] = useState('')
   const [invTotalCost, setInvTotalCost] = useState('')
+  const [invSalePrice, setInvSalePrice] = useState('')
+  const [invSalePriceMax, setInvSalePriceMax] = useState('')
+  const [invSaleCurrency, setInvSaleCurrency] = useState<'USD' | 'VES' | 'USDT'>('USD')
   const [invFundedFrom, setInvFundedFrom] = useState<AccountId>('efectivo_usd')
+
+  /* ───────────── Modal cierre inversión ───────────── */
+  const [openCloseInvestment, setOpenCloseInvestment] = useState(false)
+  const [closingInvestment, setClosingInvestment] = useState<BusinessInvestment | null>(null)
+  const [reinvestPct, setReinvestPct] = useState(50)
 
   /* ───────────── Nuevo producto ───────────── */
   const [prodName, setProdName] = useState('')
@@ -144,21 +152,31 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
     const units = Number(invUnits)
     const unitCost = parseAmount(invUnitCost)
     const totalCost = parseAmount(invTotalCost)
+    const salePrice = parseAmount(invSalePrice)
+    const salePriceMax = parseAmount(invSalePriceMax)
     if (!invName.trim() || !units || units <= 0) return
     if (unitCost <= 0 && totalCost <= 0) return
+    if (salePrice <= 0 && salePriceMax <= 0) return
     const finalUnitCost = totalCost > 0 ? totalCost / units : unitCost
+    // Si hay rango, usamos el promedio; si solo uno, ese valor
+    const finalSalePrice = salePriceMax > 0 ? (salePrice + salePriceMax) / 2 : salePrice
     const investment = createInvestment({
       productId: crypto.randomUUID(),
       productName: invName.trim(),
       units,
       unitCostUSD: finalUnitCost,
       fundedFrom: invFundedFrom,
+      expectedSalePriceUSD: finalSalePrice,
+      expectedSaleCurrency: invSaleCurrency,
     })
     setInvestments((prev) => [...prev, investment])
     setInvName('')
     setInvUnits('')
     setInvUnitCost('')
     setInvTotalCost('')
+    setInvSalePrice('')
+    setInvSalePriceMax('')
+    setInvSaleCurrency('USD')
     setInvFundedFrom('efectivo_usd')
     setOpenInvestment(false)
   }
@@ -213,6 +231,7 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
 
     const nextReceivables = receivables.map((r) => (r.id === selectedReceivable.id ? result.receivable : r))
 
+    const prevInvestment = investments[invIndex]
     const nextInvestments = investments.map((i) => {
       if (i.id === result.investment.id) {
         const status = getInvestmentStatus(result.investment, nextReceivables.filter((r) => r.investmentId === i.id))
@@ -220,6 +239,10 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
       }
       return i
     })
+
+    // Detectar si la inversión acaba de cerrarse
+    const updatedInv = nextInvestments.find((i) => i.id === result.investment.id)
+    const justClosed = updatedInv?.status === 'closed' && prevInvestment.status !== 'closed'
 
     setReceivables(nextReceivables)
     setInvestments(nextInvestments)
@@ -231,6 +254,13 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
     // Notificar sobrante a caja personal para que fluya a Repartir
     if (result.toPersonalCaja > 0) {
       onSurplusReady(result.toPersonalCaja, selectedAccount, paymentNote || `Cobro: ${receivables[rcIndex].client}`)
+    }
+
+    // Si la inversión se cerró, abrir modal de resumen
+    if (justClosed && updatedInv) {
+      setClosingInvestment(updatedInv)
+      setReinvestPct(50)
+      setOpenCloseInvestment(true)
     }
   }
 
@@ -433,6 +463,29 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
           </div>
 
           <div style={{ marginBottom: tokens.space[3] }}>
+            <div style={{ fontSize: tokens.fontSize.small, color: tokens.color.muted, marginBottom: tokens.space[1] }}>Precio de venta esperado por unidad</div>
+            <div style={{ display: 'flex', gap: tokens.space[2], marginBottom: tokens.space[2] }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: tokens.fontSize.micro, color: tokens.color.muted, marginBottom: tokens.space[1] }}>Mínimo</div>
+                <Input type="text" inputMode="decimal" placeholder="0,00" value={invSalePrice} onChange={(e) => setInvSalePrice(e.target.value)} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: tokens.fontSize.micro, color: tokens.color.muted, marginBottom: tokens.space[1] }}>Máximo (opcional, para rango)</div>
+                <Input type="text" inputMode="decimal" placeholder="0,00" value={invSalePriceMax} onChange={(e) => setInvSalePriceMax(e.target.value)} />
+              </div>
+            </div>
+            <div style={{ fontSize: tokens.fontSize.micro, color: tokens.color.muted, marginBottom: tokens.space[1] }}>Moneda</div>
+            <Select value={invSaleCurrency} onChange={(e) => setInvSaleCurrency(e.target.value as 'USD' | 'VES' | 'USDT')}>
+              <option value="USD">USD</option>
+              <option value="VES">Bs (VES)</option>
+              <option value="USDT">USDT</option>
+            </Select>
+            <div style={{ marginTop: tokens.space[1], fontSize: tokens.fontSize.micro, color: tokens.color.muted }}>
+              Si pones mínimo y máximo, se usa el promedio. Si solo mínimo, ese valor.
+            </div>
+          </div>
+
+          <div style={{ marginBottom: tokens.space[3] }}>
             <div style={{ fontSize: tokens.fontSize.small, color: tokens.color.muted, marginBottom: tokens.space[1] }}>Entró en</div>
             <SegmentedControl options={ACCOUNT_OPTIONS} value={invFundedFrom} onValueChange={(v) => setInvFundedFrom(v as AccountId)} />
           </div>
@@ -603,6 +656,106 @@ export function NegociosView({ rates, onSurplusReady }: Props) {
               </Button>
               <Button variant="primary" size="sm" onClick={handlePayment} disabled={parseAmount(paymentAmount) <= 0}>
                 Confirmar cobro
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ───────────── Modal: Inversión cerrada ───────────── */}
+      <Modal open={openCloseInvestment} onClose={() => setOpenCloseInvestment(false)} title="Inversión cerrada">
+        {closingInvestment && (
+          <div style={{ marginTop: tokens.space[3] }}>
+            <div style={{ fontSize: tokens.fontSize.small, color: tokens.color.muted, marginBottom: tokens.space[1] }}>
+              {closingInvestment.productName}
+            </div>
+            <div style={{ fontSize: tokens.fontSize.kpi, fontWeight: tokens.fontWeight.semibold, color: tokens.color.ink, marginBottom: tokens.space[4] }}>
+              Se vendieron las {closingInvestment.units} unidades
+            </div>
+
+            <div style={{ background: tokens.color.raised, borderRadius: tokens.radius.control, padding: tokens.space[3], marginBottom: tokens.space[3] }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: tokens.space[3], marginBottom: tokens.space[3] }}>
+                <div>
+                  <div style={{ fontSize: tokens.fontSize.micro, color: tokens.color.muted }}>Total invertido</div>
+                  <div style={{ fontSize: tokens.fontSize.body, fontWeight: tokens.fontWeight.medium, color: tokens.color.ink }}>{usd(closingInvestment.totalCostUSD)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: tokens.fontSize.micro, color: tokens.color.muted }}>Total recuperado</div>
+                  <div style={{ fontSize: tokens.fontSize.body, fontWeight: tokens.fontWeight.medium, color: tokens.color.constructive }}>{usd(closingInvestment.recoveredUSD)}</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: tokens.space[3], marginBottom: tokens.space[3] }}>
+                <div>
+                  <div style={{ fontSize: tokens.fontSize.micro, color: tokens.color.muted }}>Ganancia</div>
+                  <div style={{ fontSize: tokens.fontSize.body, fontWeight: tokens.fontWeight.medium, color: tokens.color.constructive }}>
+                    {usd(closingInvestment.recoveredUSD - closingInvestment.totalCostUSD)}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: tokens.fontSize.micro, color: tokens.color.muted }}>ROI</div>
+                  <div style={{ fontSize: tokens.fontSize.body, fontWeight: tokens.fontWeight.medium, color: tokens.color.ink }}>
+                    {closingInvestment.totalCostUSD > 0
+                      ? `${(((closingInvestment.recoveredUSD - closingInvestment.totalCostUSD) / closingInvestment.totalCostUSD) * 100).toFixed(1)}%`
+                      : '—'}
+                  </div>
+                </div>
+              </div>
+
+              {closingInvestment.expectedSalePriceUSD && (
+                <div style={{ borderTop: `1px solid ${tokens.color.rule}`, paddingTop: tokens.space[3], marginTop: tokens.space[3] }}>
+                  <div style={{ fontSize: tokens.fontSize.micro, color: tokens.color.muted, marginBottom: tokens.space[1] }}>
+                    Precio de venta esperado: {usd(closingInvestment.expectedSalePriceUSD)}/u ({closingInvestment.expectedSaleCurrency})
+                  </div>
+                  <div style={{ fontSize: tokens.fontSize.micro, color: tokens.color.muted }}>
+                    Ganancia esperada si todo a ese precio: {usd((closingInvestment.expectedSalePriceUSD - closingInvestment.unitCostUSD) * closingInvestment.units)}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ background: tokens.color.raised, borderRadius: tokens.radius.control, padding: tokens.space[3], marginBottom: tokens.space[3] }}>
+              <div style={{ fontSize: tokens.fontSize.small, fontWeight: tokens.fontWeight.medium, color: tokens.color.ink, marginBottom: tokens.space[2] }}>
+                ¿Qué haces con la ganancia?
+              </div>
+              <div style={{ marginBottom: tokens.space[2] }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: tokens.fontSize.small, marginBottom: tokens.space[1] }}>
+                  <span>Para reinvertir ({reinvestPct}%)</span>
+                  <span style={{ fontWeight: tokens.fontWeight.medium, color: tokens.color.constructive }}>
+                    {usd(((closingInvestment.recoveredUSD - closingInvestment.totalCostUSD) * reinvestPct) / 100)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={reinvestPct}
+                  onChange={(e) => setReinvestPct(Number(e.target.value))}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: tokens.fontSize.small, fontWeight: tokens.fontWeight.medium }}>
+                <span>Para ti (sobrante)</span>
+                <span style={{ color: tokens.color.ink }}>
+                  {usd(((closingInvestment.recoveredUSD - closingInvestment.totalCostUSD) * (100 - reinvestPct)) / 100)}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: tokens.space[3], justifyContent: 'flex-end' }}>
+              <Button variant="ghost" size="sm" onClick={() => setOpenCloseInvestment(false)}>
+                Cerrar
+              </Button>
+              <Button variant="primary" size="sm" onClick={() => {
+                const profit = closingInvestment.recoveredUSD - closingInvestment.totalCostUSD
+                const toReinvest = (profit * reinvestPct) / 100
+                const forYou = profit - toReinvest
+                if (forYou > 0) {
+                  onSurplusReady(forYou, 'efectivo_usd', `Cierre inversión: ${closingInvestment.productName}`)
+                }
+                setOpenCloseInvestment(false)
+              }}>
+                Enviar sobrante a Repartir
               </Button>
             </div>
           </div>

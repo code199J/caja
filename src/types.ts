@@ -193,6 +193,9 @@ export interface BusinessInvestment {
   recoveredUSD: number
   status: 'active' | 'recovered' | 'closed'
   createdAt: number
+  // Precio de venta esperado (opcional, para cálculo de ganancia al cerrar)
+  expectedSalePriceUSD?: number
+  expectedSaleCurrency?: 'USD' | 'VES' | 'USDT'
 }
 
 export interface Payment {
