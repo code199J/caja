@@ -346,8 +346,9 @@ button, input, select { font: inherit; color: inherit; }
 .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
   background: rgba(236,238,233,.94); backdrop-filter: blur(12px);
   border-top: 1px solid var(--rule); padding-bottom: env(safe-area-inset-bottom); }
-.tabbar-inner { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); padding: 0 10px; }
-.tabbar button { display: grid; justify-items: center; gap: 3px; padding: 10px 0 11px; font-size: var(--fs-micro); color: var(--faint); transition: color .15s; }
+.tabbar-inner { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: repeat(7, 1fr); padding: 0 6px; }
+.tabbar button { display: grid; justify-items: center; gap: 2px; padding: 7px 0 9px; font-size: 9px; letter-spacing: -0.02em; color: var(--faint); transition: color .15s; min-width: 0; }
+.tabbar button > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tabbar button[aria-current='page'] { color: var(--ink); }
 .tabbar button svg { opacity: .85; }
 .tabbar button[aria-current='page'] svg { opacity: 1; }

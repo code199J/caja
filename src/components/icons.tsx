@@ -71,3 +71,11 @@ export const IconWallet = () => (
     <path d="M4 8h12M4 12h12M4 16h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
   </svg>
 )
+
+export const IconBusiness = () => (
+  <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <rect x="2.5" y="6.5" width="15" height="10" rx="1.4" stroke="currentColor" strokeWidth="1.3" />
+    <path d="M7.5 6.5V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 12.5 5v1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    <path d="M2.5 10.5h15" stroke="currentColor" strokeWidth="1.3" />
+  </svg>
+)

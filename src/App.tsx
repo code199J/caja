@@ -46,7 +46,7 @@ export default function App() {
   // Sync tab with URL hash
   useEffect(() => {
     const hash = window.location.hash.slice(1)
-    const validTabs: Tab[] = ['repartir', 'movimientos', 'analisis', 'metas', 'ajustes', 'cuentas']
+    const validTabs: Tab[] = ['repartir', 'movimientos', 'analisis', 'metas', 'ajustes', 'cuentas', 'negocios']
     if (hash && validTabs.includes(hash as Tab)) setTab(hash as Tab)
     else if (!hash) setTab('repartir')
   }, [])
